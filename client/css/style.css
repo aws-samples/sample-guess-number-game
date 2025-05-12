@@ -1,0 +1,173 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #f0f2f5;
+}
+
+.container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 15px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+    .container {
+        max-width: 100%;
+        margin: 0;
+        border-radius: 0;
+    }
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.status {
+    text-align: center;
+    margin: 20px 0;
+    padding: 10px;
+    background-color: #e8f5e9;
+    border-radius: 4px;
+    color: #2e7d32;
+}
+
+.btn {
+    display: block;
+    width: 200px;
+    margin: 20px auto;
+    padding: 10px 20px;
+    background-color: #1976d2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.btn:hover {
+    background-color: #1565c0;
+}
+
+.btn:disabled {
+    background-color: #bdbdbd;
+    cursor: not-allowed;
+}
+
+.game-area {
+    margin-top: 30px;
+}
+
+.hidden {
+    display: none;
+}
+
+.range {
+    text-align: center;
+    margin: 20px 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.hints {
+    text-align: center;
+    margin: 15px 0;
+    padding: 10px;
+    background-color: #e3f2fd;
+    border-radius: 4px;
+    color: #1976d2;
+    font-size: 16px;
+}
+
+.hints p {
+    margin: 5px 0;
+}
+
+.server-config {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.input-area {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .server-config,
+    .input-area {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+}
+
+input[type="number"] {
+    width: 150px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+input[type="text"] {
+    width: 300px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+#submitGuess,
+#saveConfig {
+    width: auto;
+    margin: 0;
+    min-height: 44px;
+}
+
+@media (max-width: 768px) {
+    input[type="number"],
+    input[type="text"] {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    #submitGuess,
+    #saveConfig,
+    .btn {
+        width: 100%;
+        max-width: 300px;
+        padding: 12px 20px;
+        font-size: 18px;
+        margin: 10px auto;
+    }
+
+    h1 {
+        font-size: 24px;
+        margin: 15px 0;
+    }
+
+    .range {
+        font-size: 16px;
+    }
+
+    .hints {
+        font-size: 15px;
+    }
+}
