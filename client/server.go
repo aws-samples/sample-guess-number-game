@@ -17,25 +17,32 @@ func ensureClientDirectory() string {
 		log.Fatal(err)
 	}
 
-	// Check if we're in the client directory
-	if !strings.HasSuffix(cwd, "client") {
-		// If we're not in the client directory, try to find it
-		if strings.Contains(cwd, "client") {
-			// We're in a subdirectory of client, move up to client
-			for !strings.HasSuffix(cwd, "client") {
-				cwd = filepath.Dir(cwd)
-			}
-		} else {
-			// Check if client directory exists in current path
-			if _, err := os.Stat("client"); err == nil {
-				cwd = filepath.Join(cwd, "client")
-			} else {
-				log.Fatal("Could not locate client directory")
-			}
-		}
+	// First check if we're already in the client directory
+	if strings.HasSuffix(cwd, "client") {
+		return cwd
 	}
 
-	return cwd
+	// Try to find client directory by walking up the directory tree
+	dir := cwd
+	for {
+		// Check if client directory exists in current directory
+		clientPath := filepath.Join(dir, "client")
+		if _, err := os.Stat(clientPath); err == nil {
+			return clientPath
+		}
+
+		// Move up one directory
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			// We've reached the root directory
+			break
+		}
+		dir = parent
+	}
+
+	// If we get here, we couldn't find the client directory
+	log.Fatalf("Could not locate client directory from path: %s", cwd)
+	return ""
 }
 
 func main() {
