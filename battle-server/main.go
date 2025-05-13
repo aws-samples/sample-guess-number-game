@@ -132,6 +132,7 @@ func handleWaitingTimeout() {
 			Type:    "end",
 			Message: "No opponent connected within 10 seconds. You win by default!",
 		})
+		time.Sleep(10 * time.Second)
 		waitingPlayer.conn.Close()
 		waitingPlayer = nil
 
@@ -245,7 +246,7 @@ func (g *Game) handleTurnTimeout() {
 			})
 		}
 	}
-
+	time.Sleep(10 * time.Second)
 	g.close()
 	log.Println("Game finished due to turn timeout, exiting server")
 	mu.Lock()
@@ -304,6 +305,7 @@ func (g *Game) handleGuess(playerIdx, guess int) {
 				Message: fmt.Sprintf("Game over! Number was: %d. %s", g.targetNum, map[bool]string{true: "You win!", false: "You lose!"}[i == playerIdx]),
 			})
 		}
+		time.Sleep(10 * time.Second)
 		g.close()
 		log.Println("Game finished, exiting server")
 		mu.Lock()
@@ -349,6 +351,7 @@ func (g *Game) handleDisconnect(playerIdx int) {
 			Message: "Opponent disconnected. You win!",
 		})
 	}
+	time.Sleep(10 * time.Second)
 	g.close()
 	log.Println("Player disconnected, exiting server")
 	mu.Lock()
