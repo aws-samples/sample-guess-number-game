@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -19,6 +20,7 @@ var (
 	battleServerURL string
 	waitingPlayer   chan struct{} // Channel to signal waiting player
 	matchMutex      sync.Mutex
+	battlePort      int // Port for battle server
 )
 
 type MatchResponse struct {
@@ -33,6 +35,16 @@ func setCORS(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 }
 
+// getBattleServerURL returns the WebSocket URL for the battle server using the same host as the request
+func getBattleServerURL(r *http.Request) string {
+	// Get host from request
+	host := r.Host
+	if i := strings.Index(host, ":"); i != -1 {
+		host = host[:i] // Remove port if present
+	}
+	return fmt.Sprintf("ws://%s:%d/game", host, battlePort)
+}
+
 func match(w http.ResponseWriter, r *http.Request) {
 	setCORS(w)
 
@@ -44,6 +56,9 @@ func match(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	// Get battle server URL based on the request's host
+	battleServerURL = getBattleServerURL(r)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Transfer-Encoding", "chunked")
@@ -113,9 +128,9 @@ func match(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	port := flag.Int("port", defaultPort, "Port to run the lobby server on")
+	flag.IntVar(&battlePort, "battle-port", 8081, "Port for the battle server")
 	flag.Parse()
 
-	battleServerURL = fmt.Sprintf("ws://localhost:8081/game")
 	addr := fmt.Sprintf(":%d", *port)
 
 	http.HandleFunc("/match", match)
