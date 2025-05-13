@@ -11,7 +11,31 @@ import (
 
 // ensureClientDirectory ensures we're serving from the client directory
 func ensureClientDirectory() string {
-	// Get the current working directory
+	// First try using executable's directory as base
+	execPath, err := os.Executable()
+	if err != nil {
+		log.Printf("Warning: Could not get executable path: %v", err)
+	} else {
+		execDir := filepath.Dir(execPath)
+		// Try to find client directory starting from executable's location
+		dir := execDir
+		for {
+			// Check if client directory exists in current directory
+			clientPath := filepath.Join(dir, "client")
+			if _, err := os.Stat(clientPath); err == nil {
+				return clientPath
+			}
+
+			// Move up one directory
+			parent := filepath.Dir(dir)
+			if parent == dir {
+				break // We've reached the root directory
+			}
+			dir = parent
+		}
+	}
+
+	// If not found from executable path, try from current working directory
 	cwd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
@@ -22,7 +46,7 @@ func ensureClientDirectory() string {
 		return cwd
 	}
 
-	// Try to find client directory by walking up the directory tree
+	// Try to find client directory by walking up from current directory
 	dir := cwd
 	for {
 		// Check if client directory exists in current directory
@@ -34,14 +58,13 @@ func ensureClientDirectory() string {
 		// Move up one directory
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			// We've reached the root directory
-			break
+			break // We've reached the root directory
 		}
 		dir = parent
 	}
 
 	// If we get here, we couldn't find the client directory
-	log.Fatalf("Could not locate client directory from path: %s", cwd)
+	log.Fatalf("Could not locate client directory from either executable path or working directory. Tried from: %s", cwd)
 	return ""
 }
 
