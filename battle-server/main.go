@@ -137,6 +137,7 @@ func handleWaitingTimeout() {
 
 		// Exit the server after timeout
 		log.Println("Exiting server due to waiting timeout")
+		time.Sleep(30 * time.Second)
 		os.Exit(0)
 	}
 }
@@ -251,6 +252,7 @@ func (g *Game) handleTurnTimeout() {
 	mu.Lock()
 	serverFull = false
 	mu.Unlock()
+	time.Sleep(30 * time.Second)
 	os.Exit(0)
 }
 
@@ -309,6 +311,7 @@ func (g *Game) handleGuess(playerIdx, guess int) {
 		mu.Lock()
 		serverFull = false
 		mu.Unlock()
+		time.Sleep(30 * time.Second)
 		os.Exit(0)
 	}
 
@@ -354,6 +357,7 @@ func (g *Game) handleDisconnect(playerIdx int) {
 	mu.Lock()
 	serverFull = false
 	mu.Unlock()
+	time.Sleep(30 * time.Second)
 	os.Exit(0)
 }
 
