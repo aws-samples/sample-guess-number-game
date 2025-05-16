@@ -134,10 +134,14 @@ function setGuessInputEnabled(enabled) {
 // Reset game interface
 function resetGame() {
     showScene(configScene);
-    rangeDisplay.textContent = t('validRange') + '1-100';
     guessInput.value = '';
     setGuessInputEnabled(false);
     gameState.gameOver = false;
+    
+    // Reset the game range to initial values
+    const minRange = 1;
+    const maxRange = 100;
+    rangeDisplay.textContent = `${t('validRange')}${minRange}-${maxRange}`;
 }
 
 // Show matching failure animation
