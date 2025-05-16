@@ -9,18 +9,31 @@ import (
 
 func main() {
 	// Default port
-	port := "8000"
+	port := "8084"
 
 	// Check if port is provided as an environment variable
 	if envPort := os.Getenv("PORT"); envPort != "" {
 		port = envPort
 	}
 
-	// Create a file server handler and serve from the current directory
+	// Create a file server handler
 	fs := http.FileServer(http.Dir("."))
 
-	// Register the file server handler
-	http.Handle("/", fs)
+	// Create a wrapper handler for root path that checks auth
+	rootHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Only check auth for root path
+		if r.URL.Path == "/" {
+			auth := r.URL.Query().Get("auth")
+			if auth != "gamelift" {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+		}
+		fs.ServeHTTP(w, r)
+	})
+
+	// Register the handler
+	http.Handle("/", rootHandler)
 
 	// Start the server
 	fmt.Printf("Starting server on port %s...\n", port)
