@@ -18,8 +18,27 @@ let gameState = {
     ws: null,
     canGuess: false,
     gameOver: false,
-    isPlayer1: true // Will be set when game starts
+    isPlayer1: true, // Will be set when game starts
+    soundEnabled: true
 };
+
+// Sound effects - using short base64 encoded sounds
+const sounds = {
+    click: new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="),
+    success: new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="),
+    error: new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="),
+    victory: new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=")
+};
+
+// Play sound effect with optional volume
+function playSound(soundName, volume = 0.5) {
+    if (gameState.soundEnabled && sounds[soundName]) {
+        const sound = sounds[soundName];
+        sound.volume = volume;
+        sound.currentTime = 0;
+        sound.play().catch(e => console.log("Audio play error:", e));
+    }
+}
 
 // Function to get URL parameters
 function getUrlParam(param) {
@@ -32,23 +51,30 @@ const DEFAULT_LOBBY_SERVER = 'http://localhost:8080';
 let lobbyServer = getUrlParam('lobbyServer') || localStorage.getItem('lobbyServer') || DEFAULT_LOBBY_SERVER;
 lobbyServerInput.value = lobbyServer;
 
-// Scene management
+// Scene management with enhanced animations
 function showScene(scene) {
     [configScene, matchingScene, gameScene, resultScene].forEach(s => {
         if (s === scene) {
             s.classList.remove('hidden');
+            s.classList.add('animated', 'fadeIn');
+            setTimeout(() => s.classList.remove('animated', 'fadeIn'), 1000);
         } else {
             s.classList.add('hidden');
         }
     });
 }
 
-// Update player status
+// Update player status with enhanced animations
 function showTurnOverlay(isMyTurn) {
     const overlay = document.createElement('div');
     overlay.className = 'turn-overlay';
     overlay.textContent = isMyTurn ? t('yourTurn') : t('opponentTurn');
     document.body.appendChild(overlay);
+    
+    // Play appropriate sound
+    if (isMyTurn) {
+        playSound('click');
+    }
     
     setTimeout(() => {
         overlay.style.opacity = '0';
@@ -60,9 +86,14 @@ function updatePlayerStatus(isMyTurn) {
     const yourTurnCard = document.querySelector('.your-turn');
     const opponentTurnCard = document.querySelector('.opponent-turn');
     
-    // Update active states
-    yourTurnCard.classList.toggle('active', isMyTurn);
-    opponentTurnCard.classList.toggle('active', !isMyTurn);
+    // Update active states with enhanced animations
+    if (isMyTurn) {
+        yourTurnCard.classList.add('active', 'animated', 'pulse');
+        opponentTurnCard.classList.remove('active', 'animated', 'pulse');
+    } else {
+        yourTurnCard.classList.remove('active', 'animated', 'pulse');
+        opponentTurnCard.classList.add('active', 'animated', 'pulse');
+    }
     
     // Show turn overlay
     showTurnOverlay(isMyTurn);
@@ -75,10 +106,11 @@ saveConfigBtn.addEventListener('click', () => {
         lobbyServer = newAddress;
         localStorage.setItem('lobbyServer', lobbyServer);
         updateStatus(t('serverConfigSaved'));
+        playSound('click');
     }
 });
 
-// Update status display with animation
+// Update status display with enhanced animation
 function updateStatus(status) {
     gameStatus.style.animation = 'none';
     gameStatus.offsetHeight; // Trigger reflow
@@ -86,12 +118,16 @@ function updateStatus(status) {
     gameStatus.textContent = status;
 }
 
-// Enable/disable guess input
+// Enable/disable guess input with visual feedback
 function setGuessInputEnabled(enabled) {
     guessInput.disabled = !enabled;
     submitGuessBtn.disabled = !enabled;
+    
     if (enabled) {
+        guessInput.classList.add('active-input');
         guessInput.focus();
+    } else {
+        guessInput.classList.remove('active-input');
     }
 }
 
@@ -108,14 +144,21 @@ function resetGame() {
 function showMatchingFailure() {
     const status = document.getElementById('gameStatus');
     status.classList.add('shake');
+    playSound('error');
     setTimeout(() => status.classList.remove('shake'), 500);
 }
 
-// Start game
+// Start game with enhanced animations
 startGameBtn.addEventListener('click', async () => {
     startGameBtn.disabled = true;
-    showScene(matchingScene);
-    updateStatus(t('findingOpponent'));
+    startGameBtn.classList.add('animated', 'pulse');
+    playSound('click');
+    
+    setTimeout(() => {
+        startGameBtn.classList.remove('animated', 'pulse');
+        showScene(matchingScene);
+        updateStatus(t('findingOpponent'));
+    }, 300);
 
     try {
         const response = await fetch(`${lobbyServer}/match`);
@@ -149,6 +192,7 @@ startGameBtn.addEventListener('click', async () => {
                             
                         case 'matched':
                             updateStatus(t('opponentFound'));
+                            playSound('success');
                             if (data.wsUrl) {
                                 showCountdown(() => {
                                     connectToBattleServer(data.wsUrl);
@@ -223,7 +267,7 @@ function connectToBattleServer(wsUrl) {
     };
 }
 
-// Handle game messages
+// Handle game messages with enhanced visual feedback
 function displayHints(message) {
     const hintsDiv = document.getElementById('hints');
     const hints = [];
@@ -241,7 +285,7 @@ function displayHints(message) {
     }
 
     if (hints.length > 0) {
-        hintsDiv.innerHTML = hints.map(hint => `<p>${hint}</p>`).join('');
+        hintsDiv.innerHTML = hints.map(hint => `<p class="animated fadeIn">${hint}</p>`).join('');
         hintsDiv.style.animation = 'fadeInUp 0.5s ease';
     } else {
         hintsDiv.innerHTML = '';
@@ -256,17 +300,21 @@ function showGameResult(message) {
     if (message.includes('win')) {
         resultTitle.textContent = t('victory');
         resultTitle.style.color = 'var(--success-color)';
-        resultTitle.className = 'victory-animation';
+        resultTitle.className = 'victory-animation animated bounceIn';
         document.querySelector('.background-animation').style.animation = 'pulseBackground 2s ease-in-out infinite';
+        playSound('victory');
+        createConfetti();
     } else {
         resultTitle.textContent = t('defeat');
         resultTitle.style.color = 'var(--error-color)';
-        resultTitle.className = 'defeat-animation';
+        resultTitle.className = 'defeat-animation animated rubberBand';
+        playSound('error');
     }
     resultMessage.textContent = message;
+    resultMessage.className = 'animated fadeIn';
 }
 
-// Show countdown animation
+// Show countdown animation with enhanced visuals
 function showCountdown(callback) {
     const countdownOverlay = document.createElement('div');
     countdownOverlay.style.position = 'fixed';
@@ -279,6 +327,7 @@ function showCountdown(callback) {
     countdownOverlay.style.justifyContent = 'center';
     countdownOverlay.style.background = 'rgba(0, 0, 0, 0.8)';
     countdownOverlay.style.zIndex = '1000';
+    countdownOverlay.style.backdropFilter = 'blur(5px)';
     
     document.body.appendChild(countdownOverlay);
     
@@ -286,12 +335,17 @@ function showCountdown(callback) {
     
     function updateCount() {
         if (count > 0) {
-            countdownOverlay.innerHTML = `<div class="countdown">${count}</div>`;
+            countdownOverlay.innerHTML = `<div class="countdown animated bounceIn">${count}</div>`;
+            playSound('click');
             count--;
             setTimeout(updateCount, 1000);
         } else {
-            countdownOverlay.remove();
-            callback();
+            countdownOverlay.innerHTML = `<div class="countdown animated bounceIn">Go!</div>`;
+            playSound('success');
+            setTimeout(() => {
+                countdownOverlay.remove();
+                callback();
+            }, 1000);
         }
     }
     
@@ -321,6 +375,8 @@ function handleGameMessage(message) {
             const rangeMatch = message.message.match(/range: (\d+)-(\d+)/);
             if (rangeMatch) {
                 rangeDisplay.textContent = `${t('validRange')}${rangeMatch[1]}-${rangeMatch[2]}`;
+                rangeDisplay.classList.add('animated', 'pulse');
+                setTimeout(() => rangeDisplay.classList.remove('animated', 'pulse'), 1000);
             }
             const myTurn = message.message.includes('your turn');
             updatePlayerStatus(myTurn);
@@ -337,6 +393,7 @@ function handleGameMessage(message) {
 
         case 'error':
             updateStatus(message.message);
+            playSound('error');
             break;
 
         default:
@@ -345,7 +402,7 @@ function handleGameMessage(message) {
     }
 }
 
-// Submit guess
+// Submit guess with enhanced feedback
 submitGuessBtn.addEventListener('click', () => {
     const guess = parseInt(guessInput.value);
     
@@ -357,11 +414,18 @@ submitGuessBtn.addEventListener('click', () => {
     if (isNaN(guess) || guess < minRange || guess > maxRange) {
         alert(`${t('invalidNumber')} ${minRange} ${t('and')} ${maxRange}`);
         guessInput.value = '';
+        guessInput.classList.add('shake');
+        setTimeout(() => guessInput.classList.remove('shake'), 500);
+        playSound('error');
         setGuessInputEnabled(true);
         return;
     }
 
     if (gameState.ws && gameState.ws.readyState === WebSocket.OPEN) {
+        playSound('click');
+        submitGuessBtn.classList.add('animated', 'pulse');
+        setTimeout(() => submitGuessBtn.classList.remove('animated', 'pulse'), 500);
+        
         gameState.ws.send(JSON.stringify({
             type: 'guess',
             number: guess
@@ -369,6 +433,49 @@ submitGuessBtn.addEventListener('click', () => {
         guessInput.value = '';
         setGuessInputEnabled(false);
     }
+});
+
+// Create confetti for victory celebration
+function createConfetti() {
+    const container = document.getElementById('confetti-container');
+    container.innerHTML = '';
+    
+    const colors = [
+        'var(--primary-color)',
+        'var(--secondary-color)',
+        'var(--accent-color)',
+        '#ffffff'
+    ];
+    
+    for (let i = 0; i < 100; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti-piece';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.animationDelay = Math.random() * 3 + 's';
+        confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+        container.appendChild(confetti);
+    }
+}
+
+// Add keyboard support for better accessibility
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        if (!configScene.classList.contains('hidden') && !startGameBtn.disabled) {
+            startGameBtn.click();
+        } else if (!gameScene.classList.contains('hidden') && !submitGuessBtn.disabled) {
+            submitGuessBtn.click();
+        }
+    }
+});
+
+// Add hover effects to buttons
+document.querySelectorAll('.btn').forEach(btn => {
+    btn.addEventListener('mouseenter', () => {
+        if (!btn.disabled) {
+            playSound('click', 0.2);
+        }
+    });
 });
 
 // Initialize

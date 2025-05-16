@@ -6,9 +6,15 @@
     <title>Number Guessing Game</title>
     <link rel="stylesheet" href="css/animate.min.css">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
     <div class="background-animation">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
         <div class="particle"></div>
         <div class="particle"></div>
         <div class="particle"></div>
@@ -29,7 +35,9 @@
                     <button id="saveConfig" class="btn neon-btn">Set Lobby Server Address</button>
                 </div>
                 <div class="start-section">
-                    <button id="startGame" class="btn primary-btn pulse">Start Game</button>
+                    <button id="startGame" class="btn primary-btn pulse">
+                        <i class="fas fa-play-circle"></i> Start Game
+                    </button>
                 </div>
             </div>
         </div>
@@ -46,13 +54,13 @@
                 <div class="turn-display">
                     <div class="turn-card your-turn">
                         <div class="turn-content">
-                            <div class="turn-icon">▶</div>
+                            <div class="turn-icon"><i class="fas fa-user"></i></div>
                             <div class="turn-text" data-text="turnIndicator.yourTurn">Your Turn</div>
                         </div>
                     </div>
                     <div class="turn-card opponent-turn">
                         <div class="turn-content">
-                            <div class="turn-icon">⏳</div>
+                            <div class="turn-icon"><i class="fas fa-hourglass-half"></i></div>
                             <div class="turn-text" data-text="turnIndicator.opponentTurn">Waiting...</div>
                         </div>
                     </div>
@@ -60,7 +68,9 @@
             </div>
             <div class="input-area">
                 <input type="number" id="guessInput" min="1" max="100" placeholder="Enter your guess">
-                <button id="submitGuess" class="btn glow-effect">Submit</button>
+                <button id="submitGuess" class="btn glow-effect">
+                    <i class="fas fa-paper-plane"></i> Submit
+                </button>
             </div>
         </div>
 
@@ -68,12 +78,57 @@
             <div class="result-content">
                 <h2 id="resultTitle"></h2>
                 <div id="resultMessage"></div>
-                <button class="btn primary-btn" onclick="location.reload()">Play Again</button>
+                <button class="btn primary-btn" onclick="location.reload()">
+                    <i class="fas fa-redo-alt"></i> Play Again
+                </button>
             </div>
+            <div id="confetti-container"></div>
         </div>
     </div>
 
     <script src="js/i18n.js"></script>
     <script src="js/main.js"></script>
+    <script>
+        // Create dynamic particles
+        function createDynamicParticles() {
+            const container = document.querySelector('.background-animation');
+            for (let i = 0; i < 15; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle dynamic-particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 10 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+        
+        // Create confetti for victory celebration
+        function createConfetti() {
+            const container = document.getElementById('confetti-container');
+            container.innerHTML = '';
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti-piece';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.animationDelay = Math.random() * 3 + 's';
+                confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                container.appendChild(confetti);
+            }
+        }
+        
+        // Initialize dynamic elements
+        document.addEventListener('DOMContentLoaded', function() {
+            createDynamicParticles();
+            
+            // Override the showGameResult function to add confetti
+            const originalShowGameResult = window.showGameResult;
+            window.showGameResult = function(message) {
+                originalShowGameResult(message);
+                if (message.includes('win')) {
+                    createConfetti();
+                }
+            };
+        });
+    </script>
 </body>
 </html>

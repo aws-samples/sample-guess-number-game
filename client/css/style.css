@@ -1,6 +1,7 @@
 :root {
     --primary-color: #00ff88;
     --secondary-color: #ff3366;
+    --accent-color: #9933ff;
     --background-color: #0a0a1f;
     --text-color: #ffffff;
     --card-bg: rgba(16, 16, 44, 0.9);
@@ -10,6 +11,14 @@
                    0 0 10px rgba(0, 255, 136, 0.2),
                    0 0 15px rgba(0, 255, 136, 0.2),
                    0 0 20px rgba(0, 255, 136, 0.2);
+    --neon-shadow-secondary: 0 0 5px rgba(255, 51, 102, 0.2),
+                            0 0 10px rgba(255, 51, 102, 0.2),
+                            0 0 15px rgba(255, 51, 102, 0.2),
+                            0 0 20px rgba(255, 51, 102, 0.2);
+    --neon-shadow-accent: 0 0 5px rgba(153, 51, 255, 0.2),
+                         0 0 10px rgba(153, 51, 255, 0.2),
+                         0 0 15px rgba(153, 51, 255, 0.2),
+                         0 0 20px rgba(153, 51, 255, 0.2);
 }
 
 * {
@@ -40,33 +49,84 @@ body {
     height: 100%;
     z-index: -1;
     overflow: hidden;
+    background: radial-gradient(circle at center, 
+        rgba(10, 10, 31, 0.8) 0%,
+        rgba(5, 5, 20, 0.9) 70%,
+        rgba(0, 0, 10, 1) 100%);
 }
 
 .particle {
     position: absolute;
-    width: 2px;
-    height: 2px;
+    width: 3px;
+    height: 3px;
     background: var(--primary-color);
     border-radius: 50%;
     animation: float 15s infinite linear;
+    box-shadow: 0 0 10px var(--primary-color), 0 0 20px var(--primary-color);
 }
 
-.particle:nth-child(1) { left: 20%; animation-delay: 0s; }
-.particle:nth-child(2) { left: 40%; animation-delay: -3s; }
-.particle:nth-child(3) { left: 60%; animation-delay: -6s; }
-.particle:nth-child(4) { left: 80%; animation-delay: -9s; }
-.particle:nth-child(5) { left: 90%; animation-delay: -12s; }
+.particle:nth-child(1) { 
+    left: 20%; 
+    animation-delay: 0s; 
+    width: 4px;
+    height: 4px;
+    background: var(--primary-color);
+}
+.particle:nth-child(2) { 
+    left: 40%; 
+    animation-delay: -3s; 
+    width: 3px;
+    height: 3px;
+    background: var(--secondary-color);
+}
+.particle:nth-child(3) { 
+    left: 60%; 
+    animation-delay: -6s; 
+    width: 5px;
+    height: 5px;
+    background: var(--accent-color);
+}
+.particle:nth-child(4) { 
+    left: 80%; 
+    animation-delay: -9s; 
+    width: 2px;
+    height: 2px;
+    background: var(--primary-color);
+}
+.particle:nth-child(5) { 
+    left: 90%; 
+    animation-delay: -12s; 
+    width: 4px;
+    height: 4px;
+    background: var(--secondary-color);
+}
+
+/* Add more particles */
+.particle:after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: inherit;
+    opacity: 0.4;
+    filter: blur(5px);
+}
 
 @keyframes float {
     0% {
-        transform: translateY(-100%) rotate(0deg);
+        transform: translateY(-100%) rotate(0deg) scale(1);
         opacity: 1;
-        box-shadow: 0 0 10px var(--primary-color);
+        box-shadow: 0 0 10px var(--primary-color), 0 0 20px var(--primary-color);
+    }
+    50% {
+        transform: translateY(500%) rotate(360deg) scale(1.2);
+        opacity: 0.7;
     }
     100% {
-        transform: translateY(1000%) rotate(720deg);
+        transform: translateY(1000%) rotate(720deg) scale(0.8);
         opacity: 0;
-        box-shadow: 0 0 20px var(--primary-color);
+        box-shadow: 0 0 20px var(--primary-color), 0 0 40px var(--primary-color);
     }
 }
 
@@ -74,7 +134,7 @@ body {
     position: fixed;
     top: 20px;
     right: 20px;
-    background: transparent;
+    background: rgba(0, 0, 0, 0.3);
     color: var(--text-color);
     border: 2px solid var(--primary-color);
     border-radius: 50%;
@@ -88,10 +148,11 @@ body {
     font-weight: bold;
     transition: all 0.3s ease;
     box-shadow: var(--neon-shadow);
+    backdrop-filter: blur(5px);
 }
 
 .lang-toggle:hover {
-    transform: scale(1.1);
+    transform: scale(1.1) rotate(5deg);
     box-shadow: 0 0 10px var(--primary-color),
                 0 0 20px var(--primary-color),
                 0 0 30px var(--primary-color);
@@ -100,6 +161,7 @@ body {
 .lang-text {
     font-size: 16px;
     text-transform: uppercase;
+    text-shadow: 0 0 5px var(--primary-color);
 }
 
 .game-container {
@@ -108,6 +170,8 @@ body {
     margin: 80px auto 40px;
     position: relative;
     backdrop-filter: blur(10px);
+    perspective: 1000px;
+    transform-style: preserve-3d;
 }
 
 /* Background animations */
@@ -121,7 +185,8 @@ body {
     background: radial-gradient(circle at center, 
         rgba(0, 255, 136, 0.1) 0%,
         rgba(255, 51, 102, 0.1) 50%,
-        transparent 70%);
+        rgba(153, 51, 255, 0.1) 70%,
+        transparent 90%);
     animation: pulseBackground 8s ease-in-out infinite;
     z-index: -2;
 }
@@ -139,19 +204,51 @@ body {
                 inset 0 0 20px rgba(0, 255, 136, 0.1);
     transition: all 0.5s ease;
     border: 1px solid rgba(0, 255, 136, 0.1);
+    position: relative;
+    overflow: hidden;
+    transform: translateZ(0);
+}
+
+/* Add a subtle glass effect to scenes */
+.scene::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(255, 255, 255, 0) 50.1%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    pointer-events: none;
 }
 
 .scene.hidden {
     display: none;
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(20px) rotateX(10deg);
 }
 
 .scene:not(.hidden) {
     display: block;
     opacity: 1;
-    transform: translateY(0);
-    animation: fadeInUp 0.5s ease;
+    transform: translateY(0) rotateX(0);
+    animation: sceneEnter 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes sceneEnter {
+    0% {
+        opacity: 0;
+        transform: translateY(30px) rotateX(10deg) scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) rotateX(0) scale(1);
+    }
 }
 
 .game-title {
@@ -163,6 +260,39 @@ body {
                  0 0 20px var(--primary-color),
                  0 0 30px var(--primary-color);
     animation: glow 2s ease-in-out infinite alternate;
+    position: relative;
+    display: inline-block;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Add a cool underline effect to the title */
+.game-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--primary-color) 50%,
+        transparent 100%
+    );
+    animation: lineGlow 3s ease-in-out infinite;
+}
+
+@keyframes lineGlow {
+    0%, 100% {
+        opacity: 0.3;
+        box-shadow: 0 0 5px var(--primary-color);
+    }
+    50% {
+        opacity: 1;
+        box-shadow: 0 0 15px var(--primary-color),
+                    0 0 30px var(--primary-color);
+    }
 }
 
 @keyframes glow {
@@ -200,6 +330,7 @@ body {
     background: transparent;
     border: 2px solid var(--primary-color);
     box-shadow: var(--neon-shadow);
+    z-index: 1;
 }
 
 .btn::before {
@@ -216,6 +347,23 @@ body {
         transparent
     );
     transition: 0.5s;
+    z-index: -1;
+}
+
+.btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        45deg,
+        rgba(0, 255, 136, 0.1),
+        rgba(0, 255, 136, 0.2)
+    );
+    z-index: -2;
+    transition: all 0.3s ease;
 }
 
 .btn:hover::before {
@@ -227,6 +375,7 @@ body {
     box-shadow: 0 0 10px var(--primary-color),
                 0 0 20px var(--primary-color),
                 0 0 40px var(--primary-color);
+    letter-spacing: 3px;
 }
 
 .btn:disabled {
@@ -250,9 +399,7 @@ body {
         rgba(255, 51, 102, 0.2)
     );
     border-color: var(--secondary-color);
-    box-shadow: 0 0 5px rgba(255, 51, 102, 0.2),
-                0 0 10px rgba(255, 51, 102, 0.2),
-                0 0 15px rgba(255, 51, 102, 0.2);
+    box-shadow: var(--neon-shadow-secondary);
 }
 
 .neon-btn:hover {
@@ -284,13 +431,23 @@ body {
 }
 
 .pulse {
-    animation: pulse 2s infinite;
+    animation: buttonPulse 2s infinite;
 }
 
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
+@keyframes buttonPulse {
+    0% { 
+        transform: scale(1); 
+        box-shadow: var(--neon-shadow);
+    }
+    50% { 
+        transform: scale(1.05); 
+        box-shadow: 0 0 15px var(--primary-color),
+                    0 0 30px var(--primary-color);
+    }
+    100% { 
+        transform: scale(1); 
+        box-shadow: var(--neon-shadow);
+    }
 }
 
 .loading-spinner {
@@ -301,6 +458,22 @@ body {
     border-radius: 50%;
     margin: 20px auto;
     animation: spin 1s linear infinite;
+    box-shadow: 0 0 10px var(--primary-color);
+    position: relative;
+}
+
+/* Add a cool effect to the spinner */
+.loading-spinner::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    border-top: 2px solid var(--secondary-color);
+    animation: spin 1.5s linear infinite reverse;
 }
 
 @keyframes spin {
@@ -351,12 +524,41 @@ body {
     border-radius: 15px;
     box-shadow: var(--neon-shadow);
     backdrop-filter: blur(5px);
+    overflow: hidden;
+}
+
+/* Add a cool effect to the active turn card */
+.turn-card.active .turn-content::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+        circle at center,
+        rgba(255, 255, 255, 0.1) 0%,
+        transparent 70%
+    );
+    animation: cardGlow 3s infinite;
+}
+
+@keyframes cardGlow {
+    0%, 100% {
+        opacity: 0;
+        transform: scale(0.8) rotate(0deg);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1) rotate(180deg);
+    }
 }
 
 .turn-icon {
     font-size: 24px;
     margin-bottom: 8px;
     color: var(--primary-color);
+    text-shadow: 0 0 10px var(--primary-color);
 }
 
 .turn-text {
@@ -365,6 +567,7 @@ body {
     color: var(--text-color);
     text-transform: uppercase;
     letter-spacing: 1px;
+    text-shadow: 0 0 5px var(--primary-color);
 }
 
 @keyframes cardPulse {
@@ -379,6 +582,35 @@ body {
     }
 }
 
+/* Turn overlay animation */
+.turn-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    font-size: 36px;
+    font-weight: bold;
+    color: var(--primary-color);
+    text-shadow: 0 0 10px var(--primary-color),
+                 0 0 20px var(--primary-color);
+    opacity: 0;
+    animation: overlayFade 2s ease-in-out;
+    backdrop-filter: blur(5px);
+    transition: opacity 0.5s ease;
+}
+
+@keyframes overlayFade {
+    0% { opacity: 0; transform: scale(0.8); }
+    20% { opacity: 1; transform: scale(1.1); }
+    80% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.9); }
+}
 
 .status {
     text-align: center;
@@ -387,6 +619,35 @@ body {
     background: rgba(74, 144, 226, 0.1);
     border-radius: 8px;
     font-size: 18px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(74, 144, 226, 0.3);
+    box-shadow: 0 0 10px rgba(74, 144, 226, 0.2);
+}
+
+/* Add a cool effect to the status */
+.status::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+        circle at center,
+        rgba(74, 144, 226, 0.1) 0%,
+        transparent 70%
+    );
+    animation: statusGlow 5s infinite linear;
+}
+
+@keyframes statusGlow {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .range {
@@ -394,6 +655,16 @@ body {
     margin: 20px 0;
     font-size: 20px;
     color: var(--secondary-color);
+    text-shadow: 0 0 5px var(--secondary-color);
+    position: relative;
+    display: inline-block;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    border-radius: 20px;
+    background: rgba(255, 51, 102, 0.1);
+    border: 1px solid rgba(255, 51, 102, 0.3);
+    box-shadow: 0 0 10px rgba(255, 51, 102, 0.2);
 }
 
 .hints {
@@ -402,11 +673,44 @@ body {
     padding: 15px;
     background: rgba(74, 144, 226, 0.1);
     border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(153, 51, 255, 0.3);
+    box-shadow: 0 0 10px rgba(153, 51, 255, 0.2);
 }
 
 .hints p {
     margin: 8px 0;
     color: #aaa;
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+/* Add a cool effect to the hints */
+.hints::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        45deg,
+        rgba(153, 51, 255, 0.05) 0%,
+        rgba(0, 255, 136, 0.05) 50%,
+        rgba(255, 51, 102, 0.05) 100%
+    );
+    animation: hintGlow 10s infinite linear;
+}
+
+@keyframes hintGlow {
+    0% {
+        background-position: 0% 0%;
+    }
+    100% {
+        background-position: 100% 100%;
+    }
 }
 
 .input-area {
@@ -425,12 +729,34 @@ input[type="number"] {
     border-radius: 8px;
     color: var(--text-color);
     font-size: 16px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 5px rgba(0, 255, 136, 0.2);
 }
 
 input[type="text"]:focus,
 input[type="number"]:focus {
     outline: none;
-    box-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.5),
+                0 0 20px rgba(0, 255, 136, 0.2);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.active-input {
+    animation: inputPulse 2s infinite;
+}
+
+@keyframes inputPulse {
+    0% {
+        box-shadow: 0 0 5px rgba(0, 255, 136, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(0, 255, 136, 0.5),
+                    0 0 25px rgba(0, 255, 136, 0.3);
+    }
+    100% {
+        box-shadow: 0 0 5px rgba(0, 255, 136, 0.3);
+    }
 }
 
 .result-content {
@@ -444,6 +770,36 @@ input[type="number"]:focus {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: bounceIn 1s ease-out;
+    position: relative;
+    display: inline-block;
+}
+
+/* Add a cool effect to the result title */
+#resultTitle::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(
+        90deg,
+        var(--primary-color) 0%,
+        var(--secondary-color) 100%
+    );
+    animation: resultLineGlow 2s ease-in-out infinite;
+}
+
+@keyframes resultLineGlow {
+    0%, 100% {
+        opacity: 0.5;
+        box-shadow: 0 0 5px var(--primary-color);
+    }
+    50% {
+        opacity: 1;
+        box-shadow: 0 0 15px var(--primary-color),
+                    0 0 30px var(--primary-color);
+    }
 }
 
 .victory-animation {
@@ -457,7 +813,8 @@ input[type="number"]:focus {
 .countdown {
     font-size: 48px;
     color: var(--primary-color);
-    text-shadow: 0 0 10px var(--primary-color);
+    text-shadow: 0 0 10px var(--primary-color),
+                 0 0 20px var(--primary-color);
     animation: countdownPulse 1s ease-out;
 }
 
@@ -471,6 +828,7 @@ input[type="number"]:focus {
     font-size: 18px;
     margin-bottom: 30px;
     color: #aaa;
+    text-shadow: 0 0 2px rgba(255, 255, 255, 0.3);
 }
 
 /* Animations */
@@ -493,6 +851,33 @@ input[type="number"]:focus {
 
 .shake {
     animation: shake 0.5s ease-in-out;
+}
+
+/* Add a cool confetti effect for victory */
+@keyframes confetti {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+.confetti-piece {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: var(--primary-color);
+    top: -20px;
+    animation: confetti 4s ease-in-out infinite;
+}
+
+.confetti-piece:nth-child(2n) {
+    background: var(--secondary-color);
+    width: 8px;
+    height: 8px;
+}
+
+.confetti-piece:nth-child(3n) {
+    background: var(--accent-color);
+    width: 12px;
+    height: 12px;
 }
 
 @media (max-width: 768px) {
