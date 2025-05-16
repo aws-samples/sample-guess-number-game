@@ -1,29 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Number Guessing Game</title>
+    <link rel="stylesheet" href="css/animate.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Number Guessing Game</h1>
-        <div class="server-config">
-            <input type="text" id="lobbyServer" placeholder="Lobby Server Address" value="http://localhost:8080">
-            <button id="saveConfig" class="btn">Set Lobby Server Address</button>
+    <div class="background-animation">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <button class="lang-toggle" onclick="toggleLanguage()">
+        <span class="lang-text">EN</span>
+    </button>
+    
+    <div class="game-container">
+        <div class="scene" id="configScene">
+            <h1 class="game-title">Number Guessing Game</h1>
+            <div class="config-section">
+                <div class="server-config">
+                    <input type="text" id="lobbyServer" placeholder="Lobby Server Address" value="http://localhost:8080">
+                    <button id="saveConfig" class="btn neon-btn">Set Lobby Server Address</button>
+                </div>
+                <div class="start-section">
+                    <button id="startGame" class="btn primary-btn pulse">Start Game</button>
+                </div>
+            </div>
         </div>
-        <div id="gameStatus" class="status">Waiting to start...</div>
-        <button id="startGame" class="btn">Start Game</button>
-        <div id="gameArea" class="game-area hidden">
+
+        <div class="scene hidden" id="matchingScene">
+            <div class="loading-spinner"></div>
+            <div id="gameStatus" class="status">Waiting to start...</div>
+        </div>
+
+        <div class="scene hidden" id="gameScene">
             <div id="range" class="range">Valid range: 1-100</div>
             <div id="hints" class="hints"></div>
+            <div class="player-area">
+                <div class="turn-display">
+                    <div class="turn-card your-turn">
+                        <div class="turn-content">
+                            <div class="turn-icon">▶</div>
+                            <div class="turn-text" data-text="turnIndicator.yourTurn">Your Turn</div>
+                        </div>
+                    </div>
+                    <div class="turn-card opponent-turn">
+                        <div class="turn-content">
+                            <div class="turn-icon">⏳</div>
+                            <div class="turn-text" data-text="turnIndicator.opponentTurn">Waiting...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="input-area">
                 <input type="number" id="guessInput" min="1" max="100" placeholder="Enter your guess">
-                <button id="submitGuess" class="btn">Submit</button>
+                <button id="submitGuess" class="btn glow-effect">Submit</button>
+            </div>
+        </div>
+
+        <div class="scene hidden" id="resultScene">
+            <div class="result-content">
+                <h2 id="resultTitle"></h2>
+                <div id="resultMessage"></div>
+                <button class="btn primary-btn" onclick="location.reload()">Play Again</button>
             </div>
         </div>
     </div>
+
+    <script src="js/i18n.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

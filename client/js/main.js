@@ -2,6 +2,24 @@
 const lobbyServerInput = document.getElementById('lobbyServer');
 const saveConfigBtn = document.getElementById('saveConfig');
 const startGameBtn = document.getElementById('startGame');
+const gameStatus = document.getElementById('gameStatus');
+const guessInput = document.getElementById('guessInput');
+const submitGuessBtn = document.getElementById('submitGuess');
+const rangeDisplay = document.getElementById('range');
+
+// Scenes
+const configScene = document.getElementById('configScene');
+const matchingScene = document.getElementById('matchingScene');
+const gameScene = document.getElementById('gameScene');
+const resultScene = document.getElementById('resultScene');
+
+// Game state
+let gameState = {
+    ws: null,
+    canGuess: false,
+    gameOver: false,
+    isPlayer1: true // Will be set when game starts
+};
 
 // Function to get URL parameters
 function getUrlParam(param) {
@@ -14,31 +32,57 @@ const DEFAULT_LOBBY_SERVER = 'http://localhost:8080';
 let lobbyServer = getUrlParam('lobbyServer') || localStorage.getItem('lobbyServer') || DEFAULT_LOBBY_SERVER;
 lobbyServerInput.value = lobbyServer;
 
+// Scene management
+function showScene(scene) {
+    [configScene, matchingScene, gameScene, resultScene].forEach(s => {
+        if (s === scene) {
+            s.classList.remove('hidden');
+        } else {
+            s.classList.add('hidden');
+        }
+    });
+}
+
+// Update player status
+function showTurnOverlay(isMyTurn) {
+    const overlay = document.createElement('div');
+    overlay.className = 'turn-overlay';
+    overlay.textContent = isMyTurn ? t('yourTurn') : t('opponentTurn');
+    document.body.appendChild(overlay);
+    
+    setTimeout(() => {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.remove(), 500);
+    }, 1500);
+}
+
+function updatePlayerStatus(isMyTurn) {
+    const yourTurnCard = document.querySelector('.your-turn');
+    const opponentTurnCard = document.querySelector('.opponent-turn');
+    
+    // Update active states
+    yourTurnCard.classList.toggle('active', isMyTurn);
+    opponentTurnCard.classList.toggle('active', !isMyTurn);
+    
+    // Show turn overlay
+    showTurnOverlay(isMyTurn);
+}
+
 // Save server configuration
 saveConfigBtn.addEventListener('click', () => {
     const newAddress = lobbyServerInput.value.trim();
     if (newAddress) {
         lobbyServer = newAddress;
         localStorage.setItem('lobbyServer', lobbyServer);
-        updateStatus('Server configuration saved');
+        updateStatus(t('serverConfigSaved'));
     }
 });
 
-const gameStatus = document.getElementById('gameStatus');
-const gameArea = document.getElementById('gameArea');
-const guessInput = document.getElementById('guessInput');
-const submitGuessBtn = document.getElementById('submitGuess');
-const rangeDisplay = document.getElementById('range');
-
-// Game state
-let gameState = {
-    ws: null,
-    canGuess: false,
-    gameOver: false
-};
-
-// Update status display
+// Update status display with animation
 function updateStatus(status) {
+    gameStatus.style.animation = 'none';
+    gameStatus.offsetHeight; // Trigger reflow
+    gameStatus.style.animation = 'fadeInUp 0.5s ease';
     gameStatus.textContent = status;
 }
 
@@ -53,18 +97,25 @@ function setGuessInputEnabled(enabled) {
 
 // Reset game interface
 function resetGame() {
-    gameArea.classList.add('hidden');
-    rangeDisplay.textContent = 'Valid range: 1-100';
+    showScene(configScene);
+    rangeDisplay.textContent = t('validRange') + '1-100';
     guessInput.value = '';
     setGuessInputEnabled(false);
     gameState.gameOver = false;
 }
 
+// Show matching failure animation
+function showMatchingFailure() {
+    const status = document.getElementById('gameStatus');
+    status.classList.add('shake');
+    setTimeout(() => status.classList.remove('shake'), 500);
+}
+
 // Start game
 startGameBtn.addEventListener('click', async () => {
     startGameBtn.disabled = true;
-    updateStatus('Finding opponent...');
-    resetGame();
+    showScene(matchingScene);
+    updateStatus(t('findingOpponent'));
 
     try {
         const response = await fetch(`${lobbyServer}/match`);
@@ -72,7 +123,6 @@ startGameBtn.addEventListener('click', async () => {
             throw new Error('Matchmaking server error');
         }
 
-        // Create a reader to handle multiple JSON responses
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
@@ -83,12 +133,11 @@ startGameBtn.addEventListener('click', async () => {
             
             buffer += decoder.decode(value, {stream: true});
             
-            // Process complete JSON objects
             const lines = buffer.split('\n');
-            buffer = lines.pop() || ''; // Keep the incomplete line in buffer
+            buffer = lines.pop() || '';
             
             for (const line of lines) {
-                if (!line.trim()) continue; // Skip empty lines
+                if (!line.trim()) continue;
                 
                 try {
                     const data = JSON.parse(line);
@@ -99,37 +148,40 @@ startGameBtn.addEventListener('click', async () => {
                             break;
                             
                         case 'matched':
-                            updateStatus(data.message);
+                            updateStatus(t('opponentFound'));
                             if (data.wsUrl) {
-                                // Short delay to show the "opponent found" message
-                                setTimeout(() => connectToBattleServer(data.wsUrl), 1000);
-                                return; // Exit the polling loop
+                                showCountdown(() => {
+                                    connectToBattleServer(data.wsUrl);
+                                });
+                                return;
                             } else {
                                 throw new Error('Invalid server address');
                             }
                             
                         case 'timeout':
-                            updateStatus(data.message);
+                            showMatchingFailure();
+                            updateStatus(t('matchmakingFailed'));
                             startGameBtn.disabled = false;
-                            return; // Exit the polling loop
+                            return;
                             
                         case 'error':
+                            showMatchingFailure();
                             updateStatus(data.message);
                             startGameBtn.disabled = false;
-                            return; // Exit the polling loop
+                            return;
                             
                         default:
                             throw new Error('Invalid response from server');
                     }
                 } catch (parseError) {
                     console.error('Parse error:', parseError);
-                    // Continue to next line if this one is invalid
                 }
             }
         }
     } catch (error) {
         console.error('Error:', error);
-        updateStatus('Matchmaking failed, please try again');
+        showMatchingFailure();
+        updateStatus(t('matchmakingFailed'));
         startGameBtn.disabled = false;
     }
 });
@@ -148,25 +200,26 @@ function connectToBattleServer(wsUrl) {
 
     gameState.ws.onmessage = (event) => {
         try {
-            // amazonq-ignore-next-line
             const message = JSON.parse(event.data);
             handleGameMessage(message);
         } catch (error) {
             console.error('Message parsing error:', error);
-            updateStatus('Message processing error');
+            updateStatus(t('messageError'));
         }
     };
 
     gameState.ws.onclose = () => {
         if (!gameState.gameOver) {
-            updateStatus('Connection lost, please try again');
+            updateStatus(t('connectionLost'));
             startGameBtn.disabled = false;
+            showScene(configScene);
         }
     };
 
     gameState.ws.onerror = () => {
-        updateStatus('Connection error, please try again');
+        updateStatus(t('connectionError'));
         startGameBtn.disabled = false;
+        showScene(configScene);
     };
 }
 
@@ -175,74 +228,110 @@ function displayHints(message) {
     const hintsDiv = document.getElementById('hints');
     const hints = [];
 
-    // Display all non-negative hints
     if (message.isEven !== undefined && message.isEven !== -1) {
-        if (message.isEven === 1) {
-            hints.push('This is an even number');
-        } else if (message.isEven === 0) {
-            hints.push('This is an odd number');
-        }
+        hints.push(message.isEven === 1 ? t('hints.even') : t('hints.odd'));
     }
 
     if (message.sum !== undefined && message.sum !== -1) {
-        hints.push(`Sum of digits is: ${message.sum}`);
+        hints.push(t('hints.sumOfDigits') + message.sum);
     }
 
     if (message.isPrime !== undefined && message.isPrime !== -1) {
-        if (message.isPrime === 1) {
-            hints.push('This is a prime number');
-        } else if (message.isPrime === 0) {
-            hints.push('This is not a prime number');
-        }
+        hints.push(message.isPrime === 1 ? t('hints.prime') : t('hints.notPrime'));
     }
 
     if (hints.length > 0) {
         hintsDiv.innerHTML = hints.map(hint => `<p>${hint}</p>`).join('');
+        hintsDiv.style.animation = 'fadeInUp 0.5s ease';
     } else {
         hintsDiv.innerHTML = '';
     }
 }
 
+function showGameResult(message) {
+    showScene(resultScene);
+    const resultTitle = document.getElementById('resultTitle');
+    const resultMessage = document.getElementById('resultMessage');
+    
+    if (message.includes('win')) {
+        resultTitle.textContent = t('victory');
+        resultTitle.style.color = 'var(--success-color)';
+        resultTitle.className = 'victory-animation';
+        document.querySelector('.background-animation').style.animation = 'pulseBackground 2s ease-in-out infinite';
+    } else {
+        resultTitle.textContent = t('defeat');
+        resultTitle.style.color = 'var(--error-color)';
+        resultTitle.className = 'defeat-animation';
+    }
+    resultMessage.textContent = message;
+}
+
+// Show countdown animation
+function showCountdown(callback) {
+    const countdownOverlay = document.createElement('div');
+    countdownOverlay.style.position = 'fixed';
+    countdownOverlay.style.top = '0';
+    countdownOverlay.style.left = '0';
+    countdownOverlay.style.width = '100%';
+    countdownOverlay.style.height = '100%';
+    countdownOverlay.style.display = 'flex';
+    countdownOverlay.style.alignItems = 'center';
+    countdownOverlay.style.justifyContent = 'center';
+    countdownOverlay.style.background = 'rgba(0, 0, 0, 0.8)';
+    countdownOverlay.style.zIndex = '1000';
+    
+    document.body.appendChild(countdownOverlay);
+    
+    let count = 3;
+    
+    function updateCount() {
+        if (count > 0) {
+            countdownOverlay.innerHTML = `<div class="countdown">${count}</div>`;
+            count--;
+            setTimeout(updateCount, 1000);
+        } else {
+            countdownOverlay.remove();
+            callback();
+        }
+    }
+    
+    updateCount();
+}
+
 function handleGameMessage(message) {
     switch (message.type) {
         case 'waiting':
-            gameArea.classList.add('hidden');
+            showScene(matchingScene);
             updateStatus(message.message);
             break;
             
         case 'start':
-            gameArea.classList.remove('hidden');
+            showScene(gameScene);
+            gameState.isPlayer1 = message.message.includes('Player 1');
             updateStatus(message.message);
-            rangeDisplay.textContent = 'Valid range: 1-100';
-            gameState.canGuess = message.message.includes('your turn');
-            setGuessInputEnabled(gameState.canGuess);
+            const isMyTurn = message.message.includes('your turn');
+            updatePlayerStatus(isMyTurn);
+            gameState.canGuess = isMyTurn;
+            setGuessInputEnabled(isMyTurn);
             displayHints(message);
             break;
 
         case 'update':
             updateStatus(message.message);
-            // Extract range from message
             const rangeMatch = message.message.match(/range: (\d+)-(\d+)/);
             if (rangeMatch) {
-                rangeDisplay.textContent = `Valid range: ${rangeMatch[1]}-${rangeMatch[2]}`;
+                rangeDisplay.textContent = `${t('validRange')}${rangeMatch[1]}-${rangeMatch[2]}`;
             }
-            gameState.canGuess = message.message.includes('your turn');
-            setGuessInputEnabled(gameState.canGuess);
+            const myTurn = message.message.includes('your turn');
+            updatePlayerStatus(myTurn);
+            gameState.canGuess = myTurn;
+            setGuessInputEnabled(myTurn);
             displayHints(message);
             break;
 
         case 'end':
             gameState.gameOver = true;
-            if (message.message.includes('You win!')) {
-                updateStatus('🎉 ' + message.message + ' 🎉');
-                gameStatus.style.color = '#2ecc71';
-                gameStatus.style.fontSize = '24px';
-                gameStatus.style.fontWeight = 'bold';
-            } else {
-                updateStatus(message.message);
-                gameStatus.style.color = '#e74c3c';
-            }
-            gameArea.classList.add('hidden');
+            showGameResult(message.message);
             startGameBtn.disabled = false;
             break;
 
@@ -260,15 +349,13 @@ function handleGameMessage(message) {
 submitGuessBtn.addEventListener('click', () => {
     const guess = parseInt(guessInput.value);
     
-    // Extract current valid range from rangeDisplay
     const rangeText = rangeDisplay.textContent;
-    const rangeMatch = rangeText.match(/Valid range: (\d+)-(\d+)/);
-    const minRange = rangeMatch ? parseInt(rangeMatch[1]) : 1;
-    const maxRange = rangeMatch ? parseInt(rangeMatch[2]) : 100;
+    const rangeMatch = rangeText.match(/\d+-\d+/)[0].split('-');
+    const minRange = parseInt(rangeMatch[0]);
+    const maxRange = parseInt(rangeMatch[1]);
     
     if (isNaN(guess) || guess < minRange || guess > maxRange) {
-        // amazonq-ignore-next-line
-        alert(`Please enter a number between ${minRange} and ${maxRange}`);
+        alert(`${t('invalidNumber')} ${minRange} ${t('and')} ${maxRange}`);
         guessInput.value = '';
         setGuessInputEnabled(true);
         return;
@@ -282,4 +369,10 @@ submitGuessBtn.addEventListener('click', () => {
         guessInput.value = '';
         setGuessInputEnabled(false);
     }
+});
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    resetGame();
+    updatePageText(); // Initialize translations
 });
